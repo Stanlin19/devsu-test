@@ -1,6 +1,5 @@
 package com.devsu.account.infrastructure.entity;
 
-
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;

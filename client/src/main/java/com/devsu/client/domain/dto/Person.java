@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotNull;
 
 @MappedSuperclass
 public class Person {
-
     @NotBlank(message = "It should not be blank")
     @NotEmpty(message = "It should not be empty")
     @NotNull(message = "It should not be null")

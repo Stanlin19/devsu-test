@@ -9,8 +9,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Client  extends Person {
-
+public class Client extends Person{
     private Long id;
     @NotBlank(message = "It should not be blank")
     @NotEmpty(message = "It should not be empty")
@@ -34,5 +33,4 @@ public class Client  extends Person {
         this.password = password;
         this.status = status;
     }
-
 }

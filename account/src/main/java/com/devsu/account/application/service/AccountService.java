@@ -1,80 +1,87 @@
 package com.devsu.account.application.service;
 
-import com.devsu.account.application.port.IAccountService;
+import com.devsu.account.application.port.IAcccountService;
 import com.devsu.account.domain.dto.Account;
+import com.devsu.account.domain.dto.ReportDto;
+import com.devsu.account.domain.dto.response.AccountResponse;
 import com.devsu.account.domain.mapper.AccountDataMapper;
 import com.devsu.account.infrastructure.entity.AccountEntity;
 import com.devsu.account.infrastructure.repository.AccountRepository;
+import jakarta.persistence.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
-public class AccountService implements IAccountService {
+@Async
+public class AccountService implements IAcccountService {
 
     private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
+
     private final AccountRepository accountRepository;
 
-    public AccountService(AccountRepository accountRepository, AccountDataMapper accountDataMapper) {
+    public AccountService(AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
     }
 
     @Override
-    public Flux<Account> findAll() throws InterruptedException {
+    public CompletableFuture<List<Account>> findAll() throws InterruptedException {
         logger.info("Searching accounts");
-        Flux<AccountEntity> accountsEntity  = accountRepository.findAll();
+        List<Account> accounts = accountRepository.findAll()
+                .stream().map(AccountDataMapper::fromAccountEntityToAccount)
+                .toList();
         logger.info("Searching accounts completed");
-        return accountsEntity
-                .map(AccountDataMapper::fromAccountEntityToAccount)
-                .switchIfEmpty(Flux.empty());
+        return CompletableFuture.completedFuture(accounts);
     }
 
     @Override
-    public Mono<Account> getAccountById(Long id) {
+    public CompletableFuture<AccountResponse<Account>> getAccountById(Long id) {
         logger.info("Searching account");
-        Mono<AccountEntity> accountEntity = accountRepository.findAccountById(id);
+        Optional<AccountEntity> accountEntity = accountRepository.findById(id);
         logger.info("Searching account completed");
-        return accountEntity.map(AccountDataMapper::fromAccountEntityToAccount)
-                .switchIfEmpty(Mono.empty());
+        if(!accountEntity.isPresent()){
+            return CompletableFuture.completedFuture(new AccountResponse<Account>(AccountDataMapper.fromAccountEntityToAccount(accountEntity.get()),
+                    "Account with id "+id+" was not found"));
+        }
+        return CompletableFuture.completedFuture(new AccountResponse<Account>(
+                AccountDataMapper.fromAccountEntityToAccount(accountEntity.get())));
     }
 
     @Override
-    public Mono<Account> save(Account account) {
+    public CompletableFuture<Account> save(Account account) {
         logger.info("Saving account completed");
-        Mono<AccountEntity> accountEntity = accountRepository.save(AccountDataMapper.fromAccountToAccountEntity(account));
+        AccountEntity accountEntity = accountRepository.save(AccountDataMapper.fromAccountToAccountEntity(account));
         logger.info("Saved account");
-        return accountEntity.map(AccountDataMapper::fromAccountEntityToAccount)
-                .switchIfEmpty(Mono.empty());
+        return CompletableFuture.completedFuture(AccountDataMapper.fromAccountEntityToAccount(accountEntity));
     }
 
     @Override
-    public Mono<Account> update(Account account, Long id) {
-        Mono<AccountEntity> accountMono = accountRepository.findById(id);
-
-        return accountMono.flatMap((existingAccount) -> {
-            existingAccount.setAccountNumber(account.getAccountNumber());
-            existingAccount.setAccountType(account.getAccountType());
-            existingAccount.setInitBalance(account.getInitBalance());
-            existingAccount.setStatus(account.isStatus());
-            existingAccount.setClientId(account.getClientId());
-            return accountRepository.save(existingAccount);
-        }).map((AccountDataMapper::fromAccountEntityToAccount));
+    public CompletableFuture<Account> update(Account account, Long id) {
+        logger.info("Updating account completed");
+        AccountEntity accountEntity = accountRepository.save(AccountDataMapper.fromAccountToAccountEntity(account));
+        logger.info("Updated account");
+        return CompletableFuture.completedFuture(AccountDataMapper.fromAccountEntityToAccount(accountEntity));
     }
 
     @Override
-    public Mono<Account> updateBalance(Long accountId, Long balance) {
-        Mono<AccountEntity> accountMono = accountRepository.findById(accountId);
-        return accountMono.flatMap((existingAccount) -> {
-            existingAccount.setInitBalance(balance);
-            return accountRepository.save(existingAccount);
-        }).map((AccountDataMapper::fromAccountEntityToAccount));
+    public CompletableFuture<String> delete(Long id) {
+        Optional<AccountEntity> account = accountRepository.findById(id);
+        if(account.isEmpty()){
+            return CompletableFuture.completedFuture("Client with id "+id+" was not found");
+        } else {
+            accountRepository.deleteById(id);
+            return CompletableFuture.completedFuture("Client deleted");
+        }
     }
 
     @Override
-    public Mono<Object> delete(Long id) {
-        Mono<AccountEntity> accountMono = accountRepository.findById(id);
-        return accountMono.flatMap(accountRepository::delete);
+    public CompletableFuture<List<Tuple>> getReportDataFromAccount(String dates, Long clientId) {
+        String[] dateRange = dates.split(" ");
+        return CompletableFuture.completedFuture(accountRepository.findDataByAccountId(dateRange[0], dateRange[1], clientId));
     }
 }

@@ -2,9 +2,7 @@ package com.devsu.account.infrastructure.controller.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.web.reactive.error.DefaultErrorAttributes;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
-public class ValidatorHandler extends DefaultErrorAttributes {
+public class ValidatorHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ValidatorHandler.class);
 
@@ -58,6 +56,4 @@ public class ValidatorHandler extends DefaultErrorAttributes {
         errors.put("Message", ex.getCause().getMessage());
         return errors;
     }
-
-
 }

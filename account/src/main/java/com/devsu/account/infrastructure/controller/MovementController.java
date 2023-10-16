@@ -1,49 +1,49 @@
 package com.devsu.account.infrastructure.controller;
 
-import com.devsu.account.application.facade.RegisterMovements;
+import com.devsu.account.application.facade.IRegisterMovement;
 import com.devsu.account.application.port.IMovementService;
+import com.devsu.account.domain.dto.Account;
 import com.devsu.account.domain.dto.Movement;
+import com.devsu.account.domain.dto.response.AccountResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("movements")
 public class MovementController {
 
     private final IMovementService movementService;
-    private final RegisterMovements registerMovements;
+    private final IRegisterMovement registerMovement;
 
-    public MovementController(IMovementService movementService, RegisterMovements registerMovements) {
+    public MovementController(IMovementService movementService, IRegisterMovement registerMovement) {
         this.movementService = movementService;
-        this.registerMovements = registerMovements;
+        this.registerMovement = registerMovement;
     }
 
     @GetMapping
-    public ResponseEntity<Flux<Movement>> findAll() throws InterruptedException {
-        Flux<Movement> clients = movementService.findAll();
-        return ResponseEntity.ok(clients.switchIfEmpty(Mono.empty()));
+    public ResponseEntity<List<Movement>> findAll() throws InterruptedException, ExecutionException {
+        List<Movement> movements = movementService.findAll().get();
+        return ResponseEntity.ok(movements);
     }
 
-    @PostMapping("/account/{accountId}")
-    public ResponseEntity<Mono<String>> save(@Valid @RequestBody Movement movement,
-                                               @PathVariable("accountId") Long accountId){
-
-        return ResponseEntity.ok(registerMovements.registerMovement(movement, accountId));
-        //return new ResponseEntity<>(movementService.save(movement), HttpStatus.CREATED);
+    @PostMapping
+    public ResponseEntity<AccountResponse<Account>> save(@Valid @RequestBody Movement movement) throws ExecutionException, InterruptedException {
+        return new ResponseEntity<>(registerMovement.registerMovement(movement).get(), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Mono<Movement>> update(@RequestBody Movement movement, @PathVariable Long id){
-        return ResponseEntity.ok(movementService.update(movement, id));
+    public ResponseEntity<Movement> update(@RequestBody Movement movement, @PathVariable Long id) throws ExecutionException, InterruptedException {
+        return ResponseEntity.ok(movementService.update(movement, id).get());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Mono<Object>> delete(@PathVariable Long id){
-        Mono<Object> res = movementService.delete(id);
-        return new ResponseEntity<>(res, HttpStatus.NO_CONTENT);
+    public ResponseEntity<String> delete(@PathVariable Long id) throws ExecutionException, InterruptedException {
+        String res = movementService.delete(id).get();
+        return new ResponseEntity<>(res, HttpStatus.OK);
     }
 }

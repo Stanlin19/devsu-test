@@ -59,5 +59,4 @@ public class ClientEntity extends Person {
     public void setStatus(boolean status) {
         this.status = status;
     }
-
 }

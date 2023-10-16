@@ -1,11 +1,11 @@
 package com.devsu.client.infrastructure.repository;
 
 import com.devsu.client.infrastructure.entity.ClientEntity;
-import org.springframework.data.r2dbc.repository.R2dbcRepository;
-import reactor.core.publisher.Mono;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface ClientRepository extends R2dbcRepository<ClientEntity, Long> {
+@Repository
+public interface ClientRepository extends JpaRepository<ClientEntity, Long> {
 
-    Mono<ClientEntity> findClientById(Long id);
-
+    ClientEntity findClientById(Long id);
 }
