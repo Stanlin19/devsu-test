@@ -5,7 +5,6 @@ import com.devsu.account.application.port.IAcccountService;
 import com.devsu.account.domain.dto.Account;
 import com.devsu.account.domain.dto.ReportDto;
 import com.devsu.account.domain.dto.response.AccountResponse;
-import jakarta.persistence.Tuple;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
