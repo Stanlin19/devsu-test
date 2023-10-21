@@ -29,7 +29,7 @@ public class MovementController {
     }
 
     @PostMapping("/account/{accountId}")
-    public ResponseEntity<Mono<String>> save(@Valid @RequestBody Movement movement,
+    public ResponseEntity<Mono<Movement>> save(@Valid @RequestBody Movement movement,
                                                @PathVariable("accountId") Long accountId){
 
         return ResponseEntity.ok(registerMovements.registerMovement(movement, accountId));

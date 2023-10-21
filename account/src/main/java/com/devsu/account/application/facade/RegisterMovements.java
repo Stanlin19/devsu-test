@@ -2,6 +2,7 @@ package com.devsu.account.application.facade;
 
 import com.devsu.account.application.port.IAccountService;
 import com.devsu.account.application.port.IMovementService;
+import com.devsu.account.domain.dto.Account;
 import com.devsu.account.domain.dto.Movement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +22,13 @@ public class RegisterMovements {
         this.accountService = accountService;
     }
 
-    public Mono<String> registerMovement(Movement movement, Long accountId){
-        movement.setBalance(movement.getBalance() - movement.getValueMovement());
-        movementService.save(movement);
-        accountService.updateBalance(accountId, movement.getBalance());
-        return Mono.just("Created movement");
+    public Mono<Movement> registerMovement(Movement movement, Long accountId){
+        return accountService.getAccountById(accountId).flatMap(a->{
+           a.setInitBalance(movement.getBalance() + movement.getValueMovement());
+           return accountService.update(a, accountId);
+        }).flatMap(x -> {
+            movement.setBalance(movement.getBalance() + movement.getValueMovement());
+            return movementService.save(movement);
+        });
     }
 }
